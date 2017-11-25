@@ -18,7 +18,7 @@ from django.http import Http404
 
 
 class DialogListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'django_private_chat/dialogs_orig.html'
+    template_name = 'django_private_chat/dialogs.html'
     model = models.Dialog
     ordering = 'modified'
 
@@ -65,7 +65,8 @@ class DialogListView(LoginRequiredMixin, generic.ListView):
         else:
             context['opponent_username'] = context['active_dialog'].owner.username
             context['opponent'] = context['active_dialog'].owner
-        context['ws_server_path'] = 'ws://{}:{}/'.format(
+        context['ws_server_path'] = '{}://{}:{}/'.format(
+            settings.CHAT_WS_SERVER_PROTOCOL,
             settings.CHAT_WS_SERVER_HOST,
             settings.CHAT_WS_SERVER_PORT,
         )
