@@ -27,3 +27,34 @@ class Message(TimeStampedModel, SoftDeletableModel):
 
     def __str__(self):
         return self.sender.username + "(" + self.get_formatted_create_datetime() + ") - '" + self.text + "'"
+
+
+# http://gavinballard.com/associating-django-users-sessions/
+from django.contrib.sessions.models import Session
+class UserSession(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    session = models.ForeignKey(Session)
+
+from django.contrib.auth.signals import user_logged_in
+
+def user_logged_in_handler(sender, request, user, **kwargs):
+    UserSession.objects.get_or_create(
+        user = user,
+        session_id = request.session.session_key
+    )
+
+user_logged_in.connect(user_logged_in_handler)
+
+# That’s really all we need to do to keep the user associated with their sessions.
+# Now, we can implement delete_user_sessions() like this:
+
+from .models import UserSession
+
+def delete_user_sessions(user):
+    user_sessions = UserSession.objects.filter(user=user)
+    for user_session in user_sessions:
+        user_session.session.delete()
+
+# Because of the way Django’s ForeignKey relations work on deletion,
+# calling user_session.session.delete() will also remove the associated UserSession object.
+# This will also be the case if you’re cleaning up expired sessions through a cron job or similar.
