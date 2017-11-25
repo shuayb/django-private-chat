@@ -6,7 +6,6 @@ from django.conf import settings
 from django.template.defaultfilters import date as dj_date
 from django.utils.translation import ugettext as _
 
-
 class Dialog(TimeStampedModel):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Dialog owner"), related_name="selfDialogs")
     opponent = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Dialog opponent"))
@@ -48,7 +47,6 @@ user_logged_in.connect(user_logged_in_handler)
 # That’s really all we need to do to keep the user associated with their sessions.
 # Now, we can implement delete_user_sessions() like this:
 
-from .models import UserSession
 
 def delete_user_sessions(user):
     user_sessions = UserSession.objects.filter(user=user)
