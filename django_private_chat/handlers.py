@@ -213,7 +213,8 @@ def new_messages_handler(stream):
                         text=packet['message'],
                         read=False
                     )
-                    packet['created'] = msg.get_formatted_create_datetime()
+                    # packet['created'] = msg.get_formatted_create_datetime()
+                    packet['created'] = msg.get_create_datetime_isoformated()
                     packet['sender_name'] = msg.sender.username
                     packet['message_id'] = msg.id
 

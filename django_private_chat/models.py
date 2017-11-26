@@ -24,8 +24,11 @@ class Message(TimeStampedModel, SoftDeletableModel):
     def get_formatted_create_datetime(self):
         return dj_date(self.created, settings.DATETIME_FORMAT)
 
+    def get_create_datetime_isoformated(self):
+        return self.created.isoformat()
+
     def __str__(self):
-        return self.sender.username + "(" + self.get_formatted_create_datetime() + ") - '" + self.text + "'"
+        return self.sender.username + "(" + self.get_create_datetime_isoformated() + ") - '" + self.text + "'"
 
 
 # http://gavinballard.com/associating-django-users-sessions/
