@@ -11,6 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 logger = logging.getLogger('django-private-dialog')
 ws_connections = {}
 
+
 @asyncio.coroutine
 def target_message(conn, payload):
     """
@@ -71,7 +72,7 @@ def gone_online_handler(stream):
                 for session in user_sessions:
                     if list(filter(lambda x: x[0] == session.session.session_key, ws_connections)).__len__() > 0:
                         for pp in list(filter(lambda x: x[0] == session.session.session_key, ws_connections)):
-                            online_opponents.append((session.user.username,pp[0],ws_connections[pp]))
+                            online_opponents.append((session.user.username, pp[0], ws_connections[pp]))
 
                 online_opponents_sockets = [i[2] for i in online_opponents]
                 yield from fanout_message(online_opponents_sockets,
@@ -121,8 +122,10 @@ def check_online_handler(stream):
                 user_window_connections = list()
                 for x in ws_connections.items():
                     try:
-                        if get_user_from_session_v2(x[0][0]).username == user_owner.username:
-                            user_window_connections.append(x[1])
+                        user = get_user_from_session_v2(x[0][0])
+                        if user:
+                            if user.username == user_owner.username:
+                                user_window_connections.append(x[1])
                     except ObjectDoesNotExist:
                         pass
 
@@ -150,8 +153,10 @@ def gone_offline_handler(stream):
                 count = 0
                 for x in ws_connections.items():
                     try:
-                        if get_user_from_session_v2(x[0][0]).username == user_owner.username:
-                            count = count + 1
+                        user = get_user_from_session_v2(x[0][0])
+                        if user:
+                            if user.username == user_owner.username:
+                                count = count + 1
                     except ObjectDoesNotExist:
                         pass
 
@@ -178,7 +183,7 @@ def gone_offline_handler(stream):
                     for session in user_sessions:
                         if list(filter(lambda x: x[0] == session.session.session_key, ws_connections)).__len__() > 0:
                             for pp in list(filter(lambda x: x[0] == session.session.session_key, ws_connections)):
-                                online_opponents.append((session.user.username,pp[0],ws_connections[pp]))
+                                online_opponents.append((session.user.username, pp[0], ws_connections[pp]))
 
                     online_opponents_sockets = [i[2] for i in online_opponents]
                     yield from fanout_message(online_opponents_sockets,
@@ -229,11 +234,13 @@ def new_messages_handler(stream):
 
                     # In case same dialog is opened at multiple places by same person
                     for x in ws_connections.items():
-                        if get_user_from_session_v2(x[0][0]).username == user_owner.username:
-                            connections.append(x[1])
+                        user = get_user_from_session_v2(x[0][0])
+                        if user:
+                            if user.username == user_owner.username:
+                                connections.append(x[1])
 
-                        if get_user_from_session_v2(x[0][0]).username == user_opponent.username:
-                            connections.append(x[1])
+                            if user.username == user_opponent.username:
+                                connections.append(x[1])
 
                     yield from fanout_message(connections, packet)
                 else:
@@ -317,14 +324,16 @@ def read_message_handler(stream):
                     connections = []
                     for x in ws_connections.items():
                         try:
-                            if get_user_from_session_v2(x[0][0]).username == user_opponent:
-                                connections.append(x[1])
+                            user = get_user_from_session_v2(x[0][0])
+                            if user:
+                                if user.username == user_opponent:
+                                    connections.append(x[1])
                         except ObjectDoesNotExist:
                             pass
 
                     yield from fanout_message(connections,
-                                                  {'type': 'opponent-read-message',
-                                                   'username': user_opponent, 'message_id': message_id})
+                                              {'type': 'opponent-read-message',
+                                               'username': user_opponent, 'message_id': message_id})
                 else:
                     pass  # message not found
             else:
@@ -349,13 +358,13 @@ def main_handler(websocket, path):
     username = path[3]
     user_owner = get_user_from_session_v2(session_id)
     if user_owner:
-        #user_owner = user_owner.username
+        # user_owner = user_owner.username
         # Persist users connection, associate user w/a unique ID
-        #ws_connections[(user_owner, username)] = websocket
-        #logger.debug("---------------\n ws connections \n" + str(ws_connections) + "\n---------------")
+        # ws_connections[(user_owner, username)] = websocket
+        # logger.debug("---------------\n ws connections \n" + str(ws_connections) + "\n---------------")
         # Persist users connection, associate session_id (owner), current_window (owner's current window), username (opponent)
         ws_connections[(session_id, dialog_id, username)] = websocket
-        #logger.debug("---------------\n added ws connections:\n" + "SesionID: " + str(session_id) + "|" + str(dialog_id) + "|" + str(username) + "|" +  str(ws_connections[(session_id, dialog_id, username)]) + "\n---------------")
+        # logger.debug("---------------\n added ws connections:\n" + "SesionID: " + str(session_id) + "|" + str(dialog_id) + "|" + str(username) + "|" +  str(ws_connections[(session_id, dialog_id, username)]) + "\n---------------")
 
         # While the websocket is open, listen for incoming messages/events
         # if unable to listening for messages/events, then disconnect the client
@@ -372,7 +381,7 @@ def main_handler(websocket, path):
         except websockets.exceptions.InvalidState:  # User disconnected
             pass
         finally:
-            #del ws_connections[(user_owner, username)]
+            # del ws_connections[(user_owner, username)]
             logger.debug("deleted" + str(ws_connections[(session_id, dialog_id, username)]))
             del ws_connections[(session_id, dialog_id, username)]
     else:
