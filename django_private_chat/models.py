@@ -30,6 +30,10 @@ class Message(TimeStampedModel, SoftDeletableModel):
     def __str__(self):
         return self.sender.username + "(" + self.get_create_datetime_isoformated() + ") - '" + self.text + "'"
 
+    class Meta:
+        ordering = ["created"]
+
+
 
 # http://gavinballard.com/associating-django-users-sessions/
 from django.contrib.sessions.models import Session
