@@ -10,6 +10,9 @@ class Dialog(TimeStampedModel):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Dialog owner"), related_name="selfDialogs")
     opponent = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Dialog opponent"))
 
+    def is_last_read(self, user):
+        return self.messages.filter(sender=user).last().read
+
     def __str__(self):
         return _("Chat with ") + self.opponent.username
 
@@ -32,8 +35,6 @@ class Message(TimeStampedModel, SoftDeletableModel):
 
     class Meta:
         ordering = ["created"]
-
-
 
 # http://gavinballard.com/associating-django-users-sessions/
 from django.contrib.sessions.models import Session
